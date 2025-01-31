@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slime Explosion Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<script>
+let slimes = [];
+let slimeSprite;
+// color pink light green and blue
+let colors = ['rgba(100, 255, 100, 0.7)','rgba(255, 100, 200, 0.7)', 'rgba(100, 200, 255, 0.7)'];
+
+function preload() {
+  // Load the slime sprite sheet
+//   slimeSprite = loadImage('slime.png');
+    slimeSprites = [
+        loadImage('slime1.png'),
+        loadImage('slime2.png'),
+        loadImage('slime3.png')
+    ];
+}
+
+class Slime {
+  constructor() {
+    // randomint 1 to 3
+    let colorIndex = Math.floor(random(0, 3));
+    // Limit spawn area to 10 pixels from each side
+    this.x = random(10, width - 10);
+    this.y = -20;
+    this.size = random(100, 200);
+    this.color = colors[colorIndex];
+    this.velocity = random(2, 5);
+    this.particles = [];
+    this.exploded = false;
+    this.hoverStart = null;
+    this.hoverTime = 0;
+    this.shakeOffset = 0;
+    this.animationSpeed = 200; // Milliseconds per frame
+    this.areaMultiplier = 1.2;
+    this.frame = 0; // Current animation frame
+    this.lastFrameTime = 0; // Time of last frame change
+    this.image = slimeSprites[colorIndex];
+  }
+
+  update() {
+    if (!this.exploded) {
+      this.y += this.velocity;
+      
+      // Check mouse hover with 10% larger area
+      let d = dist(mouseX, mouseY, this.x, this.y);
+      if (d < this.size * this.areaMultiplier) {
+        if (!this.hoverStart) this.hoverStart = millis();
+        this.hoverTime = millis() - this.hoverStart;
+        // Ramping shake effect
+        this.shakeOffset = map(this.hoverTime, 0, 1000, 0, 10);
+        this.animationSpeed = map(this.hoverTime, 0, 1000, 100, 10);
+        
+        if (this.hoverTime >= 1000) {
+          this.explode();
+        }
+      } else {
+        this.hoverStart = null;
+        this.hoverTime = 0;
+        this.shakeOffset = 0;
+      }
+    }
+    
+    // Update particles
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      this.particles[i].update();
+      if (this.particles[i].alpha <= 0) {
+        this.particles.splice(i, 1);
+      }
+    }
+  }
+
+  display() {
+    if (!this.exploded) {
+      // Animate sprite
+      if (millis() - this.lastFrameTime > this.animationSpeed) {
+        this.frame = (this.frame + 1) % 4; // 4 frames in the sprite sheet
+        this.lastFrameTime = millis();
+      }
+      
+      // Draw the current frame
+      let offsetX = random(-this.shakeOffset, this.shakeOffset);
+      let offsetY = random(-this.shakeOffset, this.shakeOffset);
+      image(
+        this.image,
+        this.x + offsetX - this.size / 2,
+        this.y + offsetY - this.size / 2,
+        this.size,
+        this.size,
+        this.frame * 100, // Source x (frame selection)
+        0, // Source y
+        100, // Frame width
+        100 // Frame height
+      );
+    //   tint(this.color);
+    tint(255, 255, 255, [1])
+    }
+    
+    // Display particles
+    for (let particle of this.particles) {
+      particle.display();
+    }
+  }
+
+  explode() {
+    this.exploded = true;
+    for (let i = 0; i < 50; i++) { // Increased particle count
+      this.particles.push(new Particle(this.x, this.y, this.color));
+    }
+    this.hoverStart = null;
+    this.hoverTime = 0;
+  }
+
+  offScreen() {
+    return this.y > height + this.size && !this.exploded;
+  }
+
+  isDone() {
+    return this.exploded && this.particles.length === 0;
+  }
+}
+
+class Particle {
+  constructor(x, y, color) {
+    this.x = x;
+    this.y = y;
+    this.color = color;
+    this.angle = random(TWO_PI);
+    this.speed = random(1, 8); // Faster particles
+    this.size = random(5, 12); // Larger particles
+    this.alpha = 100;
+  }
+
+  update() {
+    this.x += cos(this.angle) * this.speed;
+    this.y += sin(this.angle) * this.speed;
+    this.alpha -= 2;
+    this.size *= 0.93;
+  }
+
+  display() {
+    fill(this.color.replace('0.7', `${this.alpha/100}`));
+    ellipse(this.x, this.y, this.size);
+  }
+}
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  pixelDensity(1);
+//   noCursor();
+}
+
+function draw() {
+    // light blue skyy
+  background(200, 230, 255);
+  
+  if (frameCount % 60 === 0) {
+    slimes.push(new Slime());
+  }
+  
+  for (let i = slimes.length - 1; i >= 0; i--) {
+    slimes[i].update();
+    slimes[i].display();
+    
+    // Remove slimes that are off-screen or have finished exploding
+    if (slimes[i].offScreen() || slimes[i].isDone()) {
+      slimes.splice(i, 1);
+    }
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+</script>
+</body>
+</html>
