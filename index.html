@@ -25,14 +25,11 @@ let colors = ['rgba(100, 255, 100, 0.7)','rgba(255, 100, 200, 0.7)', 'rgba(100, 
 
 function preload() {
   // Load the slime sprite sheet
-//   slimeSprite = loadImage('slime.png');
     slimeSprites = [
-        loadImage('slime1.png'),
-        loadImage('slime2.png'),
-        loadImage('slime3.png')
+        loadImage('https://raw.githubusercontent.com/taamtera/slime-game/main/slime1.png'),
+        loadImage('https://raw.githubusercontent.com/taamtera/slime-game/main/slime2.png'),
+        loadImage('https://raw.githubusercontent.com/taamtera/slime-game/main/slime3.png'),
     ];
-    // local file cursor.png
-    cursorimg = loadImage('cursor.png');
 }
 
 class Slime {
@@ -168,7 +165,8 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   // set cursor
-  cursor('https://avatars0.githubusercontent.com/u/1617169?s=16');
+  cursor('https://raw.githubusercontent.com/taamtera/slime-game/main/newcursor.png');
+  
 }
 
 function draw() {
