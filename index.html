@@ -31,6 +31,8 @@ function preload() {
         loadImage('slime2.png'),
         loadImage('slime3.png')
     ];
+    // local file cursor.png
+    cursorimg = loadImage('cursor.png');
 }
 
 class Slime {
@@ -46,10 +48,11 @@ class Slime {
     this.particles = [];
     this.exploded = false;
     this.hoverStart = null;
+    this.explodeTime = 500; //ms to explode
     this.hoverTime = 0;
     this.shakeOffset = 0;
     this.animationSpeed = 200; // Milliseconds per frame
-    this.areaMultiplier = 1.2;
+    this.areaMultiplier = 2;
     this.frame = 0; // Current animation frame
     this.lastFrameTime = 0; // Time of last frame change
     this.image = slimeSprites[colorIndex];
@@ -61,14 +64,14 @@ class Slime {
       
       // Check mouse hover with 10% larger area
       let d = dist(mouseX, mouseY, this.x, this.y);
-      if (d < this.size * this.areaMultiplier) {
+      if (d < 100 * this.areaMultiplier) {
         if (!this.hoverStart) this.hoverStart = millis();
         this.hoverTime = millis() - this.hoverStart;
         // Ramping shake effect
-        this.shakeOffset = map(this.hoverTime, 0, 1000, 0, 10);
-        this.animationSpeed = map(this.hoverTime, 0, 1000, 100, 10);
+        this.shakeOffset = map(this.hoverTime, 0, this.explodeTime, 0, 10);
+        this.animationSpeed = map(this.hoverTime, 0, this.explodeTime, 100, 10);
         
-        if (this.hoverTime >= 1000) {
+        if (this.hoverTime >= this.explodeTime) {
           this.explode();
         }
       } else {
@@ -164,7 +167,8 @@ class Particle {
 function setup() {
   createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
-//   noCursor();
+  // set cursor
+  cursor('https://avatars0.githubusercontent.com/u/1617169?s=16');
 }
 
 function draw() {
