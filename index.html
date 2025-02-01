@@ -18,8 +18,9 @@
 </head>
 <body>
 <script>
+let debug = false;
 let slimes = [];
-let slimeSprite;
+let slimeSprites;
 // color pink light green and blue
 let colors = ['rgba(100, 255, 100, 0.7)','rgba(255, 100, 200, 0.7)', 'rgba(100, 200, 255, 0.7)'];
 
@@ -37,15 +38,16 @@ class Slime {
     // randomint 1 to 3
     let colorIndex = Math.floor(random(0, 3));
     // Limit spawn area to 10 pixels from each side
-    this.x = random(10, width - 10);
+    this.distance = random(1, 2);
+    this.x = random(50, width - 50);
     this.y = -20;
-    this.size = random(100, 200);
+    this.size = this.distance * 100;
     this.color = colors[colorIndex];
-    this.velocity = random(2, 5);
+    this.velocity = this.distance * 2;
     this.particles = [];
     this.exploded = false;
     this.hoverStart = null;
-    this.explodeTime = 500; //ms to explode
+    this.explodeTime = 400; //ms to explode
     this.hoverTime = 0;
     this.shakeOffset = 0;
     this.animationSpeed = 200; // Milliseconds per frame
@@ -59,8 +61,8 @@ class Slime {
     if (!this.exploded) {
       this.y += this.velocity;
       
-      // Check mouse hover with 10% larger area
-      let d = dist(mouseX, mouseY, this.x, this.y);
+      // Check mouse hover and offset 20 verticle
+      let d = dist(mouseX, mouseY, this.x, this.y - 50);
       if (d < 100 * this.areaMultiplier) {
         if (!this.hoverStart) this.hoverStart = millis();
         this.hoverTime = millis() - this.hoverStart;
@@ -94,6 +96,9 @@ class Slime {
         this.frame = (this.frame + 1) % 4; // 4 frames in the sprite sheet
         this.lastFrameTime = millis();
       }
+      // Apply tint based on distance
+      let distanceFactor = map(this.distance, 1, 2, 200, 255);
+      tint(255, 255, 255, distanceFactor);
       
       // Draw the current frame
       let offsetX = random(-this.shakeOffset, this.shakeOffset);
@@ -109,10 +114,8 @@ class Slime {
         100, // Frame width
         100 // Frame height
       );
-    //   tint(this.color);
-    tint(255, 255, 255, [1])
     }
-    
+
     // Display particles
     for (let particle of this.particles) {
       particle.display();
@@ -122,7 +125,9 @@ class Slime {
   explode() {
     this.exploded = true;
     for (let i = 0; i < 50; i++) { // Increased particle count
+      // make particle bigger
       this.particles.push(new Particle(this.x, this.y, this.color));
+      this.particles[this.particles.length - 1].size *= 2; // Increase particle size
     }
     this.hoverStart = null;
     this.hoverTime = 0;
@@ -164,19 +169,27 @@ class Particle {
 function setup() {
   createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
-  // set cursor
   cursor('https://raw.githubusercontent.com/taamtera/slime-game/main/cursor.png');
-  
+  // cursor(CROSS);
 }
 
 function draw() {
-    // light blue skyy
-  background(200, 230, 255);
-  
-  if (frameCount % 60 === 0) {
+  // Create linear gradient for the sky
+  let sky = drawingContext.createLinearGradient(0, 0, 0, height / 2);
+  sky.addColorStop(1, 'rgba(200, 230, 255, 0.5)');
+  sky.addColorStop(0, 'rgba(100, 200, 255, 0.5)');
+  drawingContext.fillStyle = sky;
+  rect(0, 0, width, height);
+
+  // Add new slimes at a slower rate
+  if (frameCount % 30 === 0) {
     slimes.push(new Slime());
+    slimes.sort((a, b) => b.distance - a.distance);
   }
-  
+
+  // Sort slimes by their distance value in descending order (farther ones first)
+
+  // Update and display each slime in the correct order
   for (let i = slimes.length - 1; i >= 0; i--) {
     slimes[i].update();
     slimes[i].display();
@@ -190,6 +203,19 @@ function draw() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+}
+
+// Toggle debug mode with keypress 'd'
+function keyPressed() {
+  if (key === 'd' || key === 'D') {
+    debug = !debug;
+    // Switch cursor to cross when debug mode is on
+    if (debug) {
+      cursor(CROSS);
+    } else {
+      cursor('https://raw.githubusercontent.com/taamtera/slime-game/main/cursor.png');
+    }
+  }
 }
 </script>
 </body>
